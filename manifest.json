@@ -6,19 +6,11 @@
   "display": "standalone",
   "background_color": "#000000",
   "theme_color": "#00ff00",
-  "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M50 15 L70 35 L70 65 L50 85 L30 65 L30 35 Z' fill='%2300ff00'/%3E%3Ctext x='50' y='60' font-family='sans-serif' font-size='40' fill='%23000' text-anchor='middle' font-weight='bold'%3EΔ%3C/text%3E%3C/svg%3E",
+      "sizes": "any",
+      "type": "image/svg+xml"
     }
   ]
 }
