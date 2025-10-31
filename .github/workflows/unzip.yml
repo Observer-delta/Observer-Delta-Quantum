@@ -1,0 +1,26 @@
+name: Unzip Pyodide
+on:
+  push:
+    paths:
+      - 'pyodide.zip'
+  workflow_dispatch:
+
+jobs:
+  unzip:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Unzip Pyodide
+        run: |
+          mkdir -p pyodide
+          unzip -o pyodide.zip -d pyodide
+          rm -f pyodide.zip
+
+      - name: Commit & Push
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add pyodide/
+          git commit -m "Auto-unzip Pyodide" || exit 0
+          git push
