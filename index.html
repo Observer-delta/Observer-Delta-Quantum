@@ -92,7 +92,7 @@
     Built with Pyodide • <a href="https://github.com/observer-delta/observer-delta-quantum" style="color:var(--accent);">GitHub</a>
   </footer>
 
-  <!-- PYODIDE WITH FULL INIT + GAMMA PASS -->
+  <!-- PYODIDE FROM CDN -->
   <script>
     const status = document.getElementById('status');
     const progressBar = document.getElementById('progress-bar');
@@ -103,72 +103,59 @@
       status.textContent = text;
     }
 
-    let pyodide = null;
-    let pyodideReady = false;
-
-    async function loadPyodideFull() {
-      setProgress(10, 'Downloading Pyodide (~8MB)...');
-      const script = document.createElement('script');
-      script.src = 'https://cdn.jsdelivr.net/pyodide/v0.26.1/full/pyodide.js';
-      script.onload = async () => {
-        setProgress(30, 'Pyodide loaded...');
-        try {
-          pyodide = await globalThis.loadPyodide({
-            indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.26.1/full/'
-          });
-          window.pyodide = pyodide;
-          setProgress(60, 'Loading NumPy...');
-          await pyodide.loadPackage('numpy');
-          setProgress(100, 'Quantum engine ready!');
-          pyodideReady = true;
-          collapseBtn.disabled = false;
-          setTimeout(() => {
-            document.getElementById('progress-container').style.display = 'none';
-            status.style.opacity = '0.6';
-          }, 1500);
-        } catch (e) {
-          setProgress(0, 'Error: ' + e.message);
-          status.style.color = 'var(--warn)';
-        }
-      };
-      script.onerror = () => {
-        setProgress(0, 'Failed to load Pyodide.');
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/pyodide/v0.26.1/full/pyodide.js';
+    script.onload = async () => {
+      setProgress(30, 'Pyodide loaded...');
+      try {
+        const pyodide = await globalThis.loadPyodide({
+          indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.26.1/full/'
+        });
+        window.pyodide = pyodide;
+        setProgress(60, 'Loading NumPy...');
+        await pyodide.loadPackage('numpy');
+        setProgress(100, 'Quantum engine ready!');
+        setTimeout(() => {
+          document.getElementById('progress-container').style.display = 'none';
+          status.style.opacity = '0.6';
+        }, 1500);
+        collapseBtn.disabled = false;
+      } catch (e) {
+        setProgress(0, 'Error: ' + e.message);
         status.style.color = 'var(--warn)';
-      };
-      document.head.appendChild(script);
-    }
-
-    loadPyodideFull();
+      }
+    };
+    script.onerror = () => {
+      setProgress(0, 'Failed to load Pyodide.');
+      status.style.color = 'var(--warn)';
+    };
+    setProgress(10, 'Downloading Pyodide...');
+    document.head.appendChild(script);
   </script>
 
   <script type="module">
     const result = document.getElementById('result');
     const noiseSlider = document.getElementById('noise-slider');
     const noiseValue = document.getElementById('noise-value');
-    const collapseBtn = document.getElementById('collapse');
 
     noiseSlider.oninput = () => noiseValue.textContent = noiseSlider.value;
 
-    collapseBtn.onclick = async () => {
-      if (!pyodideReady || !window.pyodide) {
-        result.innerHTML = '<span style="color:var(--warn);">Engine not ready.</span>';
-        return;
-      }
-
+    document.getElementById('collapse').onclick = async () => {
+      if (!window.pyodide) return;
       const gamma = parseFloat(noiseSlider.value);
-      collapseBtn.disabled = true;
-      collapseBtn.textContent = "Collapsing...";
+      const btn = document.getElementById('collapse');
+      btn.disabled = true;
+      btn.textContent = "Collapsing...";
       result.innerHTML = "";
 
       try {
-        // Pass gamma to Python
-        window.pyodide.globals.set("gamma", gamma);
-
+        // PASS gamma as string interpolation
         const code = `
 import numpy as np
-psi = np.array([1, 0, 0, 1]) / np.sqrt(2)
+gamma = ${gamma}
+psi = np.array([1,0,0,1]) / np.sqrt(2)
 a1, a2 = 0, np.pi/4
-b1, b2 = np.pi/8, 3 * np.pi/8
+b1, b2 = np.pi/8, 3*np.pi/8
 
 def proj(theta):
     return np.array([[np.cos(theta)**2, np.cos(theta)*np.sin(theta)],
@@ -183,7 +170,7 @@ def corr(A, B, rho):
     return np.real(np.trace(A @ B @ rho))
 
 rho = (1 - gamma) * np.outer(psi, psi.conj()) + gamma * np.eye(4)/4
-S = corr(A1, B1, rho) + corr(A1, B2, rho) + corr(A2, B1, rho) - corr(A2, B2, rho)
+S = corr(A1,B1,rho) + corr(A1,B2,rho) + corr(A2,B1,rho) - corr(A2,B2,rho)
 
 f"S = {S:.4f}\\nSPOOKY LINK " + ("<span class=\\"pulse-text\\">SURVIVED</span>" if abs(S)>2 else "BROKEN")
         `;
@@ -192,14 +179,14 @@ f"S = {S:.4f}\\nSPOOKY LINK " + ("<span class=\\"pulse-text\\">SURVIVED</span>" 
       } catch (e) {
         result.innerHTML = `<span style="color:var(--warn);">Error: ${e.message}</span>`;
       } finally {
-        collapseBtn.textContent = "Collapse Again";
-        collapseBtn.disabled = false;
+        btn.textContent = "Collapse Again";
+        btn.disabled = false;
       }
     };
 
-    // Rest of your code (tabs, PWA, solar) stays the same
+    // [Rest: tabs, PWA, solar — unchanged]
     let deferredPrompt;
-    const quantumPanel = document.getContext('quantum-panel');
+    const quantumPanel = document.getElementById('quantum-panel');
     const solarPanel = document.getElementById('solar-panel');
     const installBtn = document.getElementById('install-btn');
     const updateSolarBtn = document.getElementById('update-solar');
@@ -272,10 +259,10 @@ f"S = {S:.4f}\\nSPOOKY LINK " + ("<span class=\\"pulse-text\\">SURVIVED</span>" 
       const prob = Math.min(99, Math.max(0, 10 + 60 * slope));
       flareStatus.innerHTML = `Flare Risk (30 min): <b>${prob.toFixed(1)}%</b>`;
       if (prob > 60) {
-        collapseBtn.classList.add('warn');
+        document.getElementById('collapse').classList.add('warn');
         flareStatus.style.color = 'var(--warn)';
       } else {
-        collapseBtn.classList.remove('warn');
+        document.getElementById('collapse').classList.remove('warn');
         flareStatus.style.color = 'var(--text)';
       }
     }
