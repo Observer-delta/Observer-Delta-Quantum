@@ -3,255 +3,254 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Δ = THE OBSERVER + Solar</title>
-  <link rel="manifest" href="manifest.json">
-  <link rel="icon" href="icon-192.png" sizes="192x192">
-  <link rel="apple-touch-icon" href="icon-512.png">
+  <title>Δ = Observer Delta</title>
   <meta name="theme-color" content="#000000">
+  <meta name="description" content="Live Bell-State CHSH + Solar Flares — 100% Offline Quantum Lab">
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M50 15 L70 35 L70 65 L50 85 L30 65 L30 35 Z' fill='%2300ff00'/%3E%3Ctext x='50' y='60' font-family='sans-serif' font-size='40' fill='%23000' text-anchor='middle' font-weight='bold'%3EΔ%3C/text%3E%3C/svg%3E">
+
   <style>
-    body { background:#000; color:#fff; font-family:sans-serif; text-align:center; padding:50px; margin:0; }
-    h1 { font-size:2em; margin-bottom:10px; }
-    p { font-size:1.2em; margin:8px 0; }
-    button { background:#00f; color:#fff; padding:12px 24px; border:none; border-radius:8px; cursor:pointer; font-size:1.1em; margin:10px 5px; }
-    button:disabled { background:#333; cursor:not-allowed; opacity:0.6; }
-    button.donate { background:#f90; animation: pulse-orange 2s infinite; }
-    @keyframes pulse-orange { 0%,100%{opacity:1} 50%{opacity:0.7} }
-    #progress { width:250px; height:12px; background:#333; margin:20px auto; border-radius:6px; overflow:hidden; }
-    #result { margin-top:20px; white-space:pre-wrap; font-family:monospace; font-size:1.1em; line-height:1.6; }
-    .pulse { animation:pulse 1.5s infinite; color:#0f0; text-shadow:0 0 10px #0f0; }
-    @keyframes pulse { 0%{opacity:1} 50%{opacity:0.5} 100%{opacity:1} }
-    #noise-slider { width:250px; margin:20px auto; }
-    #noise-value { display:block; margin-top:8px; font-family:monospace; color:#0f0; }
-    #flare-status { margin:15px 0; font-family:monospace; color:#ff0; font-size:1em; }
-    canvas { background:#111; margin:15px auto; display:block; border:1px solid #333; }
-    #py-status { margin:15px; font-family:monospace; color:#0f0; }
-    .donate-btn { background:#f90; color:#000; font-weight:bold; }
+    :root { --bg: #000; --text: #0f0; --accent: #0f0; --warn: #f55; }
+    [data-theme="light"] { --bg: #fff; --text: #000; --accent: #00f; --warn: #f00; }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { background:var(--bg); color:var(--text); font-family:'Courier New',monospace; min-height:100vh; display:flex; flex-direction:column; transition:0.5s; }
+    header { text-align:center; padding:20px; border-bottom:1px solid var(--accent); }
+    h1 { font-size:2rem; text-shadow:0 0 15px var(--accent); animation:glow 2s infinite alternate; }
+    @keyframes glow { from { text-shadow:0 0 10px var(--accent); } to { text-shadow:0 0 25px var(--accent); } }
+    nav { display:flex; justify-content:center; gap:10px; padding:15px; flex-wrap:wrap; }
+    button { background:transparent; color:var(--text); border:2px solid var(--accent); padding:10px 18px; border-radius:8px; cursor:pointer; font-weight:bold; transition:0.3s; min-width:100px; }
+    button:hover, button.active { background:var(--accent); color:var(--bg); }
+    button.warn { background:var(--warn); animation:pulse 1s infinite; color:#fff; }
+    @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.7; } }
+    .container { flex:1; padding:20px; max-width:700px; margin:auto; width:100%; }
+    .card { background:rgba(255,255,255,0.05); border:1px solid var(--accent); border-radius:12px; padding:20px; margin:15px 0; text-align:center; }
+    input[type="range"] { width:100%; margin:15px 0; }
+    #result { margin-top:15px; padding:12px; background:rgba(0,0,0,0.3); border-radius:8px; font-size:1.1em; min-height:50px; }
+    .pulse-text { animation:pulse 1.5s infinite; color:var(--accent); }
+    canvas { width:100%; height:160px; background:#111; border-radius:8px; margin:15px 0; }
+    #status, #flare-status { margin:10px 0; font-size:0.9em; opacity:0.8; }
+    .switch { position:relative; display:inline-block; width:50px; height:26px; margin-left:auto; }
+    .switch input { opacity:0; width:0; height:0; }
+    .slider { position:absolute; cursor:pointer; inset:0; background:#333; border-radius:34px; transition:0.4s; }
+    .slider:before { position:absolute; content:""; height:18px; width:18px; left:4px; bottom:4px; background:var(--bg); transition:0.4s; border-radius:50%; }
+    input:checked + .slider { background:var(--accent); }
+    input:checked + .slider:before { transform:translateX(24px); }
+    #install-btn { display:none; margin:15px auto; }
+    footer { text-align:center; padding:15px; font-size:0.8em; opacity:0.7; }
+    .donate img { width:180px; border-radius:12px; margin:10px 0; }
   </style>
 </head>
 <body>
-  <h1>Δ = THE OBSERVER + Solar</h1>
-  <p>Live Bell-State CHSH simulation in a noisy cavity.</p>
-  <p>Slide noise, then click to collapse the wavefunction.</p>
-  
-  <div>Noise Level (γ): <span id="noise-value">0.005</span></div>
-  <input type="range" id="noise-slider" min="0" max="0.1" step="0.001" value="0.005">
-  
-  <div id="progress"></div>
-  <button id="collapse" disabled>Collapse Now</button>
-  <button id="predict-flare">Predict Flare</button>
-  <button id="donate" class="donate-btn">Donate</button>
 
-  <div id="py-status">Loading quantum engine...</div>
-  <div id="flare-status">Fetching solar data...</div>
-  <canvas id="flux-chart" width="400" height="120"></canvas>
+  <header>
+    <h1>Δ = Observer Delta</h1>
+    <p>Quantum CHSH + Real-Time Solar Flares — 100% Offline</p>
+  </header>
 
-  <div id="result"></div>
+  <nav>
+    <button id="tab-quantum" class="active">Quantum</button>
+    <button id="tab-solar">Solar</button>
+    <label class="switch">
+      <input type="checkbox" id="theme-toggle">
+      <span class="slider"></span>
+    </label>
+  </nav>
 
-  <!-- LOCAL PYODIDE (UNZIPPED BY GITHUB ACTION) -->
+  <div class="container">
+    <div id="quantum-panel">
+      <div class="card">
+        <p>Noise Level (γ): <span id="noise-value">0.005</span></p>
+        <input type="range" id="noise-slider" min="0" max="0.1" step="0.001" value="0.005">
+        <button id="collapse">Collapse Now</button>
+        <div id="result"></div>
+      </div>
+    </div>
+
+    <div id="solar-panel" style="display:none;">
+      <div class="card">
+        <button id="update-solar">Update Solar</button>
+        <div id="flare-status">Fetching data...</div>
+        <canvas id="flux-chart"></canvas>
+        <p><small>NOAA GOES X-ray Flux (1-min)</small></p>
+      </div>
+    </div>
+
+    <div id="status">Loading quantum engine...</div>
+    <button id="install-btn">Install App</button>
+
+    <!-- PayPal QR Only -->
+    <div class="card donate">
+      <p><strong>Love this? Support the collapse!</strong></p>
+      <img src="paypal-qr.png" alt="PayPal QR Code">
+      <p><small>Scan with PayPal → Any amount helps</small></p>
+    </div>
+  </div>
+
+  <footer>
+    Built with Pyodide • <a href="https://github.com/observer-delta/Observer-Delta-Quantum" style="color:var(--accent);">GitHub</a>
+  </footer>
+
+  <!-- Pyodide -->
   <script src="pyodide/pyodide.js"></script>
-  <script>
-    let pyodideReady = false;
-    async function loadPyodideAndPackages() {
-      const status = document.getElementById('py-status');
-      status.textContent = 'Loading quantum engine...';
 
-      try {
-        const pyodide = await loadPyodide({ indexURL: "pyodide/" });
-        await pyodide.loadPackage("numpy");
-        status.textContent = 'Quantum engine ready!';
-        setTimeout(() => status.style.display = 'none', 2000);
-        pyodideReady = true;
-        document.getElementById('collapse').disabled = false;
-        return pyodide;
-      } catch (err) {
-        status.textContent = 'Pyodide failed: ' + err.message;
-        status.style.color = '#f55';
-      }
-    }
-    const pyodidePromise = loadPyodideAndPackages();
+  <script type="module">
+    import { loadPyodide } from "./pyodide/pyodide.js";
 
-    // === QUANTUM SIMULATION ===
-    const slider = document.getElementById('noise-slider');
-    const noiseValue = document.getElementById('noise-value');
+    let pyodide, deferredPrompt;
+    const quantumPanel = document.getElementById('quantum-panel');
+    const solarPanel = document.getElementById('solar-panel');
+    const result = document.getElementById('result');
+    const status = document.getElementById('status');
     const collapseBtn = document.getElementById('collapse');
-    const predictBtn = document.getElementById('predict-flare');
-    const donateBtn = document.getElementById('donate');
-    const resultDiv = document.getElementById('result');
-    const flareDiv = document.getElementById('flare-status');
+    const updateSolarBtn = document.getElementById('update-solar');
+    const flareStatus = document.getElementById('flare-status');
     const canvas = document.getElementById('flux-chart');
     const ctx = canvas.getContext('2d');
-    const progress = document.getElementById('progress');
+    const noiseSlider = document.getElementById('noise-slider');
+    const noiseValue = document.getElementById('noise-value');
+    const installBtn = document.getElementById('install-btn');
 
-    slider.addEventListener('input', () => noiseValue.textContent = slider.value);
+    // Theme
+    document.getElementById('theme-toggle').addEventListener('change', (e) => {
+      document.documentElement.setAttribute('data-theme', e.target.checked ? 'light' : 'dark');
+    });
 
-    collapseBtn.addEventListener('click', async () => {
-      if (!pyodideReady) {
-        resultDiv.textContent = "Please wait — quantum engine still loading...";
-        return;
+    // Tabs
+    document.getElementById('tab-quantum').onclick = () => switchTab('quantum');
+    document.getElementById('tab-solar').onclick = () => switchTab('solar');
+    function switchTab(tab) {
+      document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+      document.getElementById(`tab-${tab}`).classList.add('active');
+      quantumPanel.style.display = tab === 'quantum' ? 'block' : 'none';
+      solarPanel.style.display = tab === 'solar' ? 'block' : 'none';
+    }
+
+    // PWA
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      installBtn.style.display = 'block';
+      installBtn.onclick = () => {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then(() => installBtn.style.display = 'none');
+      };
+    });
+
+    // Pyodide
+    async function initPyodide() {
+      status.textContent = 'Loading quantum engine...';
+      try {
+        pyodide = await loadPyodide({ indexURL: "./pyodide/" });
+        await pyodide.loadPackage("numpy");
+        status.textContent = 'Quantum engine ready!';
+        setTimeout(() => status.style.opacity = '0.6', 2000);
+        collapseBtn.disabled = false;
+      } catch (e) {
+        status.textContent = 'Error: ' + e.message;
+        status.style.color = 'var(--warn)';
       }
-      const gamma = parseFloat(slider.value);
-      collapseBtn.disabled = true;
-      collapseBtn.textContent = "Running...";
-      resultDiv.textContent = "";
-      resultDiv.classList.remove('pulse');
+    }
 
-      let width = 0;
-      const interval = setInterval(() => {
-        width = (width + 2) % 101;
-        progress.style.background = `linear-gradient(to right, #00f ${width}%, #333 ${width}%)`;
-      }, 50);
+    // Collapse
+    collapseBtn.onclick = async () => {
+      if (!pyodide) return;
+      const gamma = parseFloat(noiseSlider.value);
+      collapseBtn.disabled = true;
+      collapseBtn.textContent = "Collapsing...";
+      result.innerHTML = "";
 
       try {
-        const pyodide = await pyodidePromise;
         const code = `
 import numpy as np
-psi = np.array([1,0,0,1],dtype=complex)/np.sqrt(2)
-rho = np.outer(psi,psi.conj())
-gamma = ${gamma}
-dt = 0.05
-steps = 200
-for _ in range(steps):
-    p = 1-np.exp(-gamma*dt)
-    rho[1,1] *= (1-p); rho[2,2] *= (1-p)
-    rho[0,0] += p*(rho[1,1]+rho[2,2])
-    rho[0,3] *= np.exp(-gamma*dt/2)
-    rho[3,0] = rho[0,3].conj()
-    rho /= np.trace(rho)
-def corr(t1,t2):
-    M1 = np.cos(t1)*np.diag([1,-1])+np.sin(t1)*np.array([[0,1],[1,0]])
-    M2 = np.cos(t2)*np.diag([1,-1])+np.sin(t2)*np.array([[0,1],[1,0]])
-    return np.real(np.trace(np.kron(M1,M2)@rho))
-S = corr(0,np.pi/4)+corr(0,-np.pi/4)+corr(np.pi/2,np.pi/4)-corr(np.pi/2,-np.pi/4)
-ideal = 2*np.sqrt(2)
-loss = (ideal-abs(S))/ideal*100
-out = f"CHSH S = {S:.4f} (max 2.828, classical ≤2)\\n"
-out += f"Noise Impact: {loss:.1f}% loss\\n\\n"
-out += "SPOOKY LINK SURVIVED" if abs(S)>2 else "SPOOKY LINK BROKEN"
-print(out)
-`;
-        await pyodide.runPython(code);
-        const output = pyodide.globals.get('out');
-        clearInterval(interval);
-        progress.style.background = '#333';
-        resultDiv.innerText = output;
-        if (Math.abs(parseFloat(output.match(/CHSH S = ([-\d.]+)/)[1])) > 2) {
-          resultDiv.classList.add('pulse');
-        }
-      } catch (err) {
-        clearInterval(interval);
-        resultDiv.innerText = "Error: " + err.message;
+psi = np.array([1,0,0,1]) / np.sqrt(2)
+a1, a2 = 0, np.pi/4
+b1, b2 = np.pi/8, 3*np.pi/8
+
+def proj(theta):
+    return np.array([[np.cos(theta)**2, np.cos(theta)*np.sin(theta)],
+                     [np.cos(theta)*np.sin(theta), np.sin(theta)**2]])
+
+A1 = np.kron(np.eye(2), proj(a1))
+A2 = np.kron(np.eye(2), proj(a2))
+B1 = np.kron(proj(b1), np.eye(2))
+B2 = np.kron(proj(b2), np.eye(2))
+
+def corr(A, B, rho):
+    return np.real(np.trace(A @ B @ rho))
+
+rho = (1 - gamma) * np.outer(psi, psi.conj()) + gamma * np.eye(4)/4
+S = corr(A1,B1,rho) + corr(A1,B2,rho) + corr(A2,B1,rho) - corr(A2,B2,rho)
+
+f"S = {S:.4f}\\nSPOOKY LINK " + ("<span class=\\"pulse-text\\">SURVIVED</span>" if abs(S)>2 else "BROKEN")
+        `;
+        const output = await pyodide.runPythonAsync(code);
+        result.innerHTML = output;
+      } catch (e) {
+        result.textContent = "Error: " + e.message;
       } finally {
         collapseBtn.textContent = "Collapse Again";
         collapseBtn.disabled = false;
       }
-    });
+    };
 
-    // === DONATE BUTTON — GOES TO YOUR PAYPAL ===
-    donateBtn.addEventListener('click', () => {
-      window.open('https://paypal.me/DELTATHEOBSERVER', '_blank');
-    });
+    noiseSlider.oninput = () => noiseValue.textContent = noiseSlider.value;
 
-    // === SOLAR DATA ===
+    // Solar
     let fluxData = [];
-    async function fetchSolarData() {
-      flareDiv.textContent = "Fetching solar data...";
-      flareDiv.style.color = "#ff0";
-
-      const endpoints = [
-        'https://services.swpc.noaa.gov/json/goes/primary/xrays-1-minute.json',
-        'https://services.swpc.noaa.gov/json/goes/xrays-primary-1-minute.json'
-      ];
-
-      for (let url of endpoints) {
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 8000);
-
-        try {
-          const resp = await fetch(url, { signal: controller.signal, cache: "no-store" });
-          clearTimeout(timeout);
-
-          if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-
-          const data = await resp.json();
-          const now = Date.now();
-          const recent = data
-            .map(p => ({ t: new Date(p.time_tag).getTime(), f: parseFloat(p.flux) || 0 }))
-            .filter(p => p.f > 0 && (now - p.t) <= 30*60*1000);
-
-          if (recent.length === 0) throw new Error("No recent data");
-
-          fluxData = recent.sort((a,b) => a.t - b.t);
-          drawChart();
-          predictFlare();
-          return;
-        } catch (e) {
-          console.warn(`Failed ${url}:`, e);
-        }
+    async function fetchSolar() {
+      flareStatus.textContent = "Updating...";
+      try {
+        const resp = await fetch('https://services.swpc.noaa.gov/json/goes/primary/xrays-1-minute.json');
+        const data = await resp.json();
+        const now = Date.now();
+        fluxData = data
+          .map(p => ({ t: new Date(p.time_tag).getTime(), f: parseFloat(p.flux) }))
+          .filter(p => p.f > 1e-10 && now - p.t < 1800000)
+          .sort((a,b) => a.t - b.t);
+        drawChart();
+        predictFlare();
+      } catch {
+        flareStatus.textContent = "Failed — retrying...";
+        setTimeout(fetchSolar, 10000);
       }
-
-      flareDiv.textContent = "Solar data unavailable — retrying in 15s";
-      flareDiv.style.color = "#f55";
-      setTimeout(fetchSolarData, 15000);
     }
 
     function drawChart() {
-      ctx.clearRect(0,0,400,120);
-      if (fluxData.length < 2) {
-        ctx.fillStyle = '#666'; ctx.font = '12px monospace'; ctx.fillText('No data', 180, 60);
-        return;
-      }
-      const t = fluxData.map(p => p.t);
-      const f = fluxData.map(p => p.f);
-      const minT = Math.min(...t), maxT = Math.max(...t);
-      const minF = Math.min(...f), maxF = Math.max(...f) || minF + 1e-10;
-      const w = 320, h = 80, padX = 40, padY = 20;
-
-      ctx.strokeStyle = '#0f0'; ctx.lineWidth = 2; ctx.beginPath();
+      if (fluxData.length < 2) return;
+      const [minT, maxT] = [Math.min(...fluxData.map(p=>p.t)), Math.max(...fluxData.map(p=>p.t))];
+      const [minF, maxF] = [Math.min(...fluxData.map(p=>p.f)), Math.max(...fluxData.map(p=>p.f))];
+      const w = canvas.width = 500, h = canvas.height = 160;
+      ctx.clearRect(0,0,w,h);
+      ctx.strokeStyle = 'var(--accent)'; ctx.lineWidth = 2;
+      ctx.beginPath();
       fluxData.forEach((p,i) => {
-        const x = padX + (p.t - minT)/(maxT - minT) * w;
-        const y = 100 - padY - (p.f - minF)/(maxF - minF) * h;
-        i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+        const x = 50 + (p.t - minT)/(maxT - minT) * (w - 100);
+        const y = 130 - (p.f - minF)/(maxF - minF) * 90;
+        i === 0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
       });
       ctx.stroke();
     }
 
     function predictFlare() {
-      if (fluxData.length < 10) {
-        flareDiv.textContent = "Flare prob: —";
-        return;
-      }
+      if (fluxData.length < 10) { flareStatus.textContent = "Flare risk: —"; return; }
       const recent = fluxData.slice(-5);
-      const dt = (recent[recent.length-1].t - recent[0].t) / 1000;
-      const slope = dt > 0 ? (recent[recent.length-1].f - recent[0].f) / dt : 0;
-      const mean = fluxData.slice(-30).reduce((a,b) => a + b.f, 0) / 30;
-      const z = -8.2 + 1.8 * mean + 3.5 * slope;
-      const prob = 1 / (1 + Math.exp(-z));
-      const pct = (prob * 100).toFixed(1);
-      flareDiv.textContent = `Flare prob (30 min): ${pct}%`;
-      flareDiv.style.color = prob > 0.6 ? '#f55' : '#ff0';
+      const slope = (recent[4].f - recent[0].f) / ((recent[4].t - recent[0].t)/60000);
+      const prob = Math.min(99, Math.max(0, 10 + 60 * slope));
+      flareStatus.innerHTML = `Flare Risk (30 min): <b>${prob.toFixed(1)}%</b>`;
+      if (prob > 60) {
+        collapseBtn.classList.add('warn');
+        flareStatus.style.color = 'var(--warn)';
+      } else {
+        collapseBtn.classList.remove('warn');
+        flareStatus.style.color = 'var(--text)';
+      }
     }
 
-    predictBtn.addEventListener('click', fetchSolarData);
-    setInterval(fetchSolarData, 120000);
-    fetchSolarData();
-
-    // === PWA INSTALL PROMPT ===
-    let deferredPrompt;
-    window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault();
-      deferredPrompt = e;
-      const installBtn = document.createElement('button');
-      installBtn.textContent = 'Install App';
-      installBtn.style.background = '#0f0';
-      installBtn.style.margin = '10px';
-      installBtn.onclick = () => {
-        deferredPrompt.prompt();
-        deferredPrompt.userChoice.then(() => {
-          installBtn.remove();
-        });
-      };
-      document.body.appendChild(installBtn);
-    });
+    updateSolarBtn.onclick = fetchSolar;
+    setInterval(fetchSolar, 120000);
+    initPyodide().then(() => setTimeout(fetchSolar, 1000));
   </script>
 </body>
 </html>
