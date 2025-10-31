@@ -25,8 +25,6 @@
     #flare-status { margin:15px 0; font-family:monospace; color:#ff0; font-size:1em; }
     canvas { background:#111; margin:15px auto; display:block; border:1px solid #333; }
     #py-status { margin:15px; font-family:monospace; color:#0f0; }
-    .donate-qr { width:150px; margin:15px auto; display:none; }
-    .donate-qr img { width:100%; border:2px solid #f90; border-radius:8px; }
     .donate-btn { background:#f90; color:#000; font-weight:bold; }
   </style>
 </head>
@@ -41,18 +39,13 @@
   <div id="progress"></div>
   <button id="collapse" disabled>Collapse Now</button>
   <button id="predict-flare">Predict Flare</button>
-  <button id="donate" class="donate-btn">Support the Spooky Link</button>
+  <button id="donate" class="donate-btn">Donate</button>
 
   <div id="py-status">Loading quantum engine...</div>
   <div id="flare-status">Fetching solar data...</div>
   <canvas id="flux-chart" width="400" height="120"></canvas>
 
   <div id="result"></div>
-
-  <div class="donate-qr" id="qr-container">
-    <p>Scan to donate</p>
-    <img src="paypal-qr.png" alt="Donate via PayPal">
-  </div>
 
   <!-- LOCAL PYODIDE (UNZIPPED BY GITHUB ACTION) -->
   <script src="pyodide/pyodide.js"></script>
@@ -88,7 +81,6 @@
     const canvas = document.getElementById('flux-chart');
     const ctx = canvas.getContext('2d');
     const progress = document.getElementById('progress');
-    const qrContainer = document.getElementById('qr-container');
 
     slider.addEventListener('input', () => noiseValue.textContent = slider.value);
 
@@ -154,16 +146,9 @@ print(out)
       }
     });
 
-    // === DONATION BUTTON (MOBILE-FRIENDLY) ===
+    // === DONATE BUTTON (NO LINK — JUST VISUAL) ===
     donateBtn.addEventListener('click', () => {
-      const paypalLink = "https://paypal.me/yourpaypalusername"; // CHANGE THIS
-      if (/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) {
-        // Mobile: Open PayPal link
-        window.open(paypalLink, '_blank');
-      } else {
-        // Desktop: Show QR
-        qrContainer.style.display = 'block';
-      }
+      alert("Donations support the spooky link. Add your PayPal or crypto link in index.html!");
     });
 
     // === SOLAR DATA ===
