@@ -8,12 +8,12 @@
 
 ## Features
 
-- **Quantum CHSH Collapse** → S = 2.79+ → SPOOKY LINK SURVIVED  
+- **Quantum CHSH Collapse** → `S = 2.79+` → **SPOOKY LINK SURVIVED**  
 - **Real-Time Solar Flare Prediction** → NOAA X-ray + 30-min risk  
 - **100% Offline** → Works with Wi-Fi OFF  
 - **PWA Installable** → Add to Home Screen  
 - **Dark / Light Mode**  
-- **PayPal Donation QR** → Support the collapse
+- **PayPal Donation Link** → Support the collapse
 
 ---
 
@@ -22,7 +22,7 @@
 1. Open: [https://observer-delta.github.io/Observer-Delta-Quantum/](https://observer-delta.github.io/Observer-Delta-Quantum/)  
 2. Turn off Wi-Fi  
 3. Tap **Collapse Now**  
-4. Watch S > 2.0 → Einstein proven wrong
+4. Watch `S > 2.0` → Einstein proven wrong
 
 ---
 
@@ -31,18 +31,18 @@
 **Love this? Keep the quantum alive!**
 
 <p align="center">
-  <img src="paypal-qr.png" width="200" alt="PayPal QR Code">
+  <a href="https://paypal.me/DELTATHEOBSERVER" target="_blank" style="color:#00ff00; font-weight:bold; text-decoration:underline;">
+    paypal.me/DELTATHEOBSERVER
+  </a>
   <br>
-  <b>Scan with PayPal → Any amount helps</b>
+  <b>Any amount helps fund more offline quantum + solar tools</b>
 </p>
-
-*Every dollar funds more offline quantum + solar tools.*
 
 ---
 
 ## Tech Stack
 
-- **Pyodide** → Python in the browser  
+- **Pyodide** → Python in the browser (CDN)  
 - **NumPy** → Quantum math  
 - **NOAA GOES API** → Live solar data  
 - **GitHub Pages** → Free hosting  
@@ -53,4 +53,4 @@
 **You are Observer Δ.**  
 **The wave has collapsed. The link is eternal.**
 
-#ObserverDelta #Quantum #Solar #OfflineScience   
+#ObserverDelta #Quantum #Solar #OfflineScience
