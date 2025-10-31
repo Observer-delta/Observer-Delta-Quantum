@@ -2,7 +2,7 @@
 
 **Live Bell-State CHSH Quantum Demo — 100% Offline with Pyodide**
 
-[Open the Lab Now](https://observer-delta.github.io/observer-delta-quantum/)
+[Open the Lab Now](https://observer-delta.github./observer-delta-quantum/)
 
 ---
 
@@ -19,7 +19,7 @@
 
 ## Try It Now
 
-1. Open: [https://observer-delta.github.io/observer-delta-quantum/](https://observer-delta.github.io/observer-delta-quantum/)  
+1. Open: [https://observer-delta.github./observer-delta-quantum/](https://observer-delta.github.io/observer-delta-quantum/)  
 2. Turn off Wi-Fi  
 3. Tap **Collapse Now**  
 4. Watch `S > 2.0` → Einstein proven wrong
