@@ -9,8 +9,7 @@ If this quantum demo blew your mind — help me build more.
 </p>
 
 <p align="center">
-  <a href="https://www.buymeacoffee.com/observerdelta">
-    <img src="https://img.shields.io/badge/Buy%20Me%20a%20Coffee-Donate-yellow?style=for-the-badge" alt="Buy Me a Coffee">
+  <a src="https://img.shields.io/badge/Buy%20Me%20a%20Coffee-Donate-yellow?style=for-the-badge" alt="Buy Me a Coffee">
   </a>
 </p>
 
