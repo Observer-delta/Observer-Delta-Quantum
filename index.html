@@ -92,7 +92,7 @@
     Built with Pyodide • <a href="https://github.com/observer-delta/observer-delta-quantum" style="color:var(--accent);">GitHub</a>
   </footer>
 
-  <!-- PYODIDE + FULL INIT -->
+  <!-- PYODIDE WITH FULL INIT + GAMMA PASS -->
   <script>
     const status = document.getElementById('status');
     const progressBar = document.getElementById('progress-bar');
@@ -103,16 +103,17 @@
       status.textContent = text;
     }
 
+    let pyodide = null;
     let pyodideReady = false;
 
-    async function initPyodide() {
-      setProgress(10, 'Downloading Pyodide...');
+    async function loadPyodideFull() {
+      setProgress(10, 'Downloading Pyodide (~8MB)...');
       const script = document.createElement('script');
       script.src = 'https://cdn.jsdelivr.net/pyodide/v0.26.1/full/pyodide.js';
       script.onload = async () => {
         setProgress(30, 'Pyodide loaded...');
         try {
-          const pyodide = await globalThis.loadPyodide({
+          pyodide = await globalThis.loadPyodide({
             indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.26.1/full/'
           });
           window.pyodide = pyodide;
@@ -137,71 +138,68 @@
       document.head.appendChild(script);
     }
 
-    initPyodide();
+    loadPyodideFull();
   </script>
 
   <script type="module">
     const result = document.getElementById('result');
     const noiseSlider = document.getElementById('noise-slider');
     const noiseValue = document.getElementById('noise-value');
+    const collapseBtn = document.getElementById('collapse');
 
     noiseSlider.oninput = () => noiseValue.textContent = noiseSlider.value;
 
-    document.getElementById('collapse').onclick = async () => {
-      if (!window.pyodide || !pyodideReady) {
+    collapseBtn.onclick = async () => {
+      if (!pyodideReady || !window.pyodide) {
         result.innerHTML = '<span style="color:var(--warn);">Engine not ready.</span>';
         return;
       }
 
       const gamma = parseFloat(noiseSlider.value);
-      const btn = document.getElementById('collapse');
-      btn.disabled = true;
-      btn.textContent = "Collapsing...";
+      collapseBtn.disabled = true;
+      collapseBtn.textContent = "Collapsing...";
       result.innerHTML = "";
 
       try {
-        // PASS gamma safely
+        // Pass gamma to Python
         window.pyodide.globals.set("gamma", gamma);
 
         const code = `
 import numpy as np
-from numpy import kron, trace, outer, real
-
-psi = np.array([1,0,0,1]) / np.sqrt(2)
+psi = np.array([1, 0, 0, 1]) / np.sqrt(2)
 a1, a2 = 0, np.pi/4
-b1, b2 = np.pi/8, 3*np.pi/8
+b1, b2 = np.pi/8, 3 * np.pi/8
 
 def proj(theta):
-    c, s = np.cos(theta), np.sin(theta)
-    return np.array([[c*c, c*s], [c*s, s*s]])
+    return np.array([[np.cos(theta)**2, np.cos(theta)*np.sin(theta)],
+                     [np.cos(theta)*np.sin(theta), np.sin(theta)**2]])
 
-A1 = kron(np.eye(2), proj(a1))
-A2 = kron(np.eye(2), proj(a2))
-B1 = kron(proj(b1), np.eye(2))
-B2 = kron(proj(b2), np.eye(2))
+A1 = np.kron(np.eye(2), proj(a1))
+A2 = np.kron(np.eye(2), proj(a2))
+B1 = np.kron(proj(b1), np.eye(2))
+B2 = np.kron(proj(b2), np.eye(2))
 
 def corr(A, B, rho):
-    return real(trace(A @ B @ rho))
+    return np.real(np.trace(A @ B @ rho))
 
-rho = (1 - gamma) * outer(psi, psi.conj()) + gamma * np.eye(4)/4
-S = corr(A1,B1,rho) + corr(A1,B2,rho) + corr(A2,B1,rho) - corr(A2,B2,rho)
+rho = (1 - gamma) * np.outer(psi, psi.conj()) + gamma * np.eye(4)/4
+S = corr(A1, B1, rho) + corr(A1, B2, rho) + corr(A2, B1, rho) - corr(A2, B2, rho)
 
 f"S = {S:.4f}\\nSPOOKY LINK " + ("<span class=\\"pulse-text\\">SURVIVED</span>" if abs(S)>2 else "BROKEN")
         `;
-
         const output = await window.pyodide.runPythonAsync(code);
         result.innerHTML = output;
       } catch (e) {
         result.innerHTML = `<span style="color:var(--warn);">Error: ${e.message}</span>`;
       } finally {
-        btn.textContent = "Collapse Again";
-        btn.disabled = false;
+        collapseBtn.textContent = "Collapse Again";
+        collapseBtn.disabled = false;
       }
     };
 
-    // [Rest: tabs, PWA, solar — unchanged]
+    // Rest of your code (tabs, PWA, solar) stays the same
     let deferredPrompt;
-    const quantumPanel = document.getElementById('quantum-panel');
+    const quantumPanel = document.getContext('quantum-panel');
     const solarPanel = document.getElementById('solar-panel');
     const installBtn = document.getElementById('install-btn');
     const updateSolarBtn = document.getElementById('update-solar');
@@ -274,10 +272,10 @@ f"S = {S:.4f}\\nSPOOKY LINK " + ("<span class=\\"pulse-text\\">SURVIVED</span>" 
       const prob = Math.min(99, Math.max(0, 10 + 60 * slope));
       flareStatus.innerHTML = `Flare Risk (30 min): <b>${prob.toFixed(1)}%</b>`;
       if (prob > 60) {
-        document.getElementById('collapse').classList.add('warn');
+        collapseBtn.classList.add('warn');
         flareStatus.style.color = 'var(--warn)';
       } else {
-        document.getElementById('collapse').classList.remove('warn');
+        collapseBtn.classList.remove('warn');
         flareStatus.style.color = 'var(--text)';
       }
     }
