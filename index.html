@@ -37,7 +37,6 @@
     #install-btn { display:none; margin:15px auto; }
     footer { text-align:center; padding:15px; font-size:0.8em; opacity:0.7; }
     .donate { margin:20px 0; padding:15px; border:1px dashed var(--accent); border-radius:12px; font-size:0.9em; text-align:center; }
-    /* PROGRESS BAR */
     #progress-container { width:100%; background:rgba(0,0,0,0.3); border-radius:8px; margin:10px 0; height:8px; overflow:hidden; }
     #progress-bar { height:100%; background:var(--accent); width:0%; transition:width 0.3s; }
   </style>
@@ -93,18 +92,19 @@
     Built with Pyodide • <a href="https://github.com/observer-delta/observer-delta-quantum" style="color:var(--accent);">GitHub</a>
   </footer>
 
-  <!-- PYODIDE WITH PROGRESS + ERROR HANDLING -->
+  <!-- PYODIDE WITH PROGRESS + PASS GAMMA -->
   <script>
     const status = document.getElementById('status');
     const progressBar = document.getElementById('progress-bar');
     const collapseBtn = document.getElementById('collapse');
+    const noiseSlider = document.getElementById('noise-slider');
+    const result = document.getElementById('result');
 
     function setProgress(percent, text) {
       progressBar.style.width = percent + '%';
       status.textContent = text;
     }
 
-    // Load Pyodide with progress
     const script = document.createElement('script');
     script.src = 'https://cdn.jsdelivr.net/pyodide/v0.26.1/full/pyodide.js';
     
@@ -112,9 +112,7 @@
       setProgress(30, 'Pyodide loaded. Initializing...');
       try {
         const pyodide = await globalThis.loadPyodide({
-          indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.26.1/full/',
-          stdout: (text) => console.log(text),
-          stderr: (text) => console.error(text)
+          indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.26.1/full/'
         });
         window.pyodide = pyodide;
 
@@ -129,12 +127,11 @@
       } catch (err) {
         setProgress(0, 'Error: ' + err.message);
         status.style.color = 'var(--warn)';
-        console.error(err);
       }
     };
 
     script.onerror = () => {
-      setProgress(0, 'Failed to load Pyodide. Check internet.');
+      setProgress(0, 'Failed to load Pyodide.');
       status.style.color = 'var(--warn)';
     };
 
@@ -143,25 +140,73 @@
   </script>
 
   <script type="module">
-    // [REST OF YOUR JS — SAME AS BEFORE]
+    const collapseBtn = document.getElementById('collapse');
+    const result = document.getElementById('result');
+    const noiseSlider = document.getElementById('noise-slider');
+    const noiseValue = document.getElementById('noise-value');
+
+    // Update noise value
+    noiseSlider.oninput = () => noiseValue.textContent = noiseSlider.value;
+
+    // Collapse — PASS gamma to Python
+    collapseBtn.onclick = async () => {
+      if (!window.pyodide) return;
+      const gamma = parseFloat(noiseSlider.value);
+      collapseBtn.disabled = true;
+      collapseBtn.textContent = "Collapsing...";
+      result.innerHTML = "";
+
+      try {
+        // PASS gamma via globals
+        window.pyodide.globals.set("gamma", gamma);
+
+        const code = `
+import numpy as np
+psi = np.array([1,0,0,1]) / np.sqrt(2)
+a1, a2 = 0, np.pi/4
+b1, b2 = np.pi/8, 3*np.pi/8
+
+def proj(theta):
+    return np.array([[np.cos(theta)**2, np.cos(theta)*np.sin(theta)],
+                     [np.cos(theta)*np.sin(theta), np.sin(theta)**2]])
+
+A1 = np.kron(np.eye(2), proj(a1))
+A2 = np.kron(np.eye(2), proj(a2))
+B1 = np.kron(proj(b1), np.eye(2))
+B2 = np.kron(proj(b2), np.eye(2))
+
+def corr(A, B, rho):
+    return np.real(np.trace(A @ B @ rho))
+
+rho = (1 - gamma) * np.outer(psi, psi.conj()) + gamma * np.eye(4)/4
+S = corr(A1,B1,rho) + corr(A1,B2,rho) + corr(A2,B1,rho) - corr(A2,B2,rho)
+
+f"S = {S:.4f}\\nSPOOKY LINK " + ("<span class=\\"pulse-text\\">SURVIVED</span>" if abs(S)>2 else "BROKEN")
+        `;
+        const output = await window.pyodide.runPythonAsync(code);
+        result.innerHTML = output;
+      } catch (e) {
+        result.innerHTML = `<span style="color:var(--warn);">Error: ${e.message}</span>`;
+      } finally {
+        collapseBtn.textContent = "Collapse Again";
+        collapseBtn.disabled = false;
+      }
+    };
+
+    // [Rest of your code: tabs, PWA, solar, etc. — unchanged]
     let deferredPrompt;
     const quantumPanel = document.getElementById('quantum-panel');
     const solarPanel = document.getElementById('solar-panel');
-    const result = document.getElementById('result');
     const installBtn = document.getElementById('install-btn');
-    const noiseSlider = document.getElementById('noise-slider');
-    const noiseValue = document.getElementById('noise-value');
     const updateSolarBtn = document.getElementById('update-solar');
     const flareStatus = document.getElementById('flare-status');
     const canvas = document.getElementById('flux-chart');
     const ctx = canvas.getContext('2d');
 
-    // Theme
     document.getElementById('theme-toggle').addEventListener('change', (e) => {
       document.documentElement.setAttribute('data-theme', e.target.checked ? 'light' : 'dark');
     });
 
-    // Tabs
     document.getElementById('tab-quantum').onclick = () => switchTab('quantum');
     document.getElementById('tab-solar').onclick = () => switchTab('solar');
     function switchTab(tab) {
@@ -171,7 +216,6 @@
       solarPanel.style.display = tab === 'solar' ? 'block' : 'none';
     }
 
-    // PWA
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
       deferredPrompt = e;
@@ -182,47 +226,6 @@
       };
     });
 
-    // Collapse
-    document.getElementById('collapse').onclick = async () => {
-      if (!window.pyodide) return;
-      const gamma = parseFloat(noiseSlider.value);
-      const btn = document.getElementById('collapse');
-      btn.disabled = true;
-      btn.textContent = "Collapsing...";
-      result.innerHTML = "";
-
-      try {
-        const code = `
-import numpy as np
-psi = np.array([1,0,0,1]) / np.sqrt(2)
-a1, a2 = 0, np.pi/4
-b1, b2 = np.pi/8, 3*np.pi/8
-def proj(theta):
-    return np.array([[np.cos(theta)**2, np.cos(theta)*np.sin(theta)],
-                     [np.cos(theta)*np.sin(theta), np.sin(theta)**2]])
-A1 = np.kron(np.eye(2), proj(a1))
-A2 = np.kron(np.eye(2), proj(a2))
-B1 = np.kron(proj(b1), np.eye(2))
-B2 = np.kron(proj(b2), np.eye(2))
-def corr(A, B, rho):
-    return np.real(np.trace(A @ B @ rho))
-rho = (1 - gamma) * np.outer(psi, psi.conj()) + gamma * np.eye(4)/4
-S = corr(A1,B1,rho) + corr(A1,B2,rho) + corr(A2,B1,rho) - corr(A2,B2,rho)
-f"S = {S:.4f}\\nSPOOKY LINK " + ("<span class=\\"pulse-text\\">SURVIVED</span>" if abs(S)>2 else "BROKEN")
-        `;
-        const output = await window.pyodide.runPythonAsync(code);
-        result.innerHTML = output;
-      } catch (e) {
-        result.textContent = "Error: " + e.message;
-      } finally {
-        btn.textContent = "Collapse Again";
-        btn.disabled = false;
-      }
-    };
-
-    noiseSlider.oninput = () => noiseValue.textContent = noiseSlider.value;
-
-    // Solar (same as before)
     let fluxData = [];
     async function fetchSolar() {
       flareStatus.textContent = "Updating...";
@@ -265,10 +268,10 @@ f"S = {S:.4f}\\nSPOOKY LINK " + ("<span class=\\"pulse-text\\">SURVIVED</span>" 
       const prob = Math.min(99, Math.max(0, 10 + 60 * slope));
       flareStatus.innerHTML = `Flare Risk (30 min): <b>${prob.toFixed(1)}%</b>`;
       if (prob > 60) {
-        document.getElementById('collapse').classList.add('warn');
+        collapseBtn.classList.add('warn');
         flareStatus.style.color = 'var(--warn)';
       } else {
-        document.getElementById('collapse').classList.remove('warn');
+        collapseBtn.classList.remove('warn');
         flareStatus.style.color = 'var(--text)';
       }
     }
