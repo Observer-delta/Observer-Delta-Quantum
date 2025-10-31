@@ -5,69 +5,70 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Δ = Observer Delta</title>
   <meta name="theme-color" content="#000000">
+  <meta name="description" content="Live Bell-State CHSH + Solar Flares — 100% Offline Quantum Lab">
+
+  <!-- PWA Manifest -->
   <link rel="manifest" href="manifest.json">
-  <link rel="icon" href="icon-192.png">
-  <link rel="apple-touch-icon" href="icon-192.png">
+
+  <!-- SVG Favicon (No PNGs) -->
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M50 15 L70 35 L70 65 L50 85 L30 65 L30 35 Z' fill='%2300ff00'/%3E%3Ctext x='50' y='60' font-family='sans-serif' font-size='40' fill='%23000' text-anchor='middle' font-weight='bold'%3EΔ%3C/text%3E%3C/svg%3E">
+
   <style>
     :root { --bg: #000; --text: #0f0; --accent: #0f0; --warn: #f55; }
     [data-theme="light"] { --bg: #fff; --text: #000; --accent: #00f; --warn: #f00; }
+    * { margin:0; padding:0; box-sizing:border-box; }
     body { 
-      margin:0; padding:0; font-family: 'Segoe UI', sans-serif; 
-      background:var(--bg); color:var(--text); min-height:100vh;
-      transition: background 0.5s, color 0.5s;
+      background:var(--bg); color:var(--text); font-family:'Courier New',monospace; 
+      min-height:100vh; display:flex; flex-direction:column; transition:0.5s;
     }
-    header { 
-      text-align:center; padding:20px; border-bottom:1px solid var(--accent);
-      position:relative;
-    }
-    h1 { 
-      font-size:1.8em; margin:0; text-shadow:0 0 10px var(--accent);
-      animation: glow 2s infinite alternate;
-    }
-    @keyframes glow { from { text-shadow:0 0 10px var(--accent); } to { text-shadow:0 0 20px var(--accent); } }
-    nav { display:flex; justify-content:center; gap:15px; margin:15px 0; }
+    header { text-align:center; padding:20px; border-bottom:1px solid var(--accent); }
+    h1 { font-size:2rem; text-shadow:0 0 15px var(--accent); animation:glow 2s infinite alternate; }
+    @keyframes glow { from { text-shadow:0 0 10px var(--accent); } to { text-shadow:0 0 25px var(--accent); } }
+    nav { display:flex; justify-content:center; gap:10px; padding:15px; flex-wrap:wrap; }
     button { 
-      background:transparent; color:var(--text); border:1px solid var(--accent); 
-      padding:10px 16px; border-radius:8px; cursor:pointer; font-size:1em;
-      transition: all 0.3s;
+      background:transparent; color:var(--text); border:2px solid var(--accent); 
+      padding:10px 18px; border-radius:8px; cursor:pointer; font-weight:bold; 
+      transition:0.3s; min-width:100px;
     }
-    button:hover { background:var(--accent); color:var(--bg); }
-    button.active { background:var(--accent); color:var(--bg); }
-    button.warn { background:var(--warn); animation:pulse 1s infinite; }
+    button:hover, button.active { background:var(--accent); color:var(--bg); }
+    button.warn { background:var(--warn); animation:pulse 1s infinite; color:#fff; }
     @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.7; } }
-    .container { padding:20px; max-width:600px; margin:auto; }
+    .container { flex:1; padding:20px; max-width:700px; margin:auto; width:100%; }
     .card { 
       background:rgba(255,255,255,0.05); border:1px solid var(--accent); 
-      border-radius:12px; padding:15px; margin:15px 0; text-align:center;
+      border-radius:12px; padding:20px; margin:15px 0; text-align:center;
     }
-    canvas { width:100%; max-width:500px; height:150px; background:#111; border-radius:8px; }
+    input[type="range"] { width:100%; margin:15px 0; }
     #result { 
-      font-family:monospace; font-size:1.1em; line-height:1.6; 
-      padding:10px; border-radius:8px; margin-top:10px;
-      min-height:60px;
+      margin-top:15px; padding:12px; background:rgba(0,0,0,0.3); 
+      border-radius:8px; font-size:1.1em; min-height:50px;
     }
-    .pulse-text { animation: pulse 1.5s infinite; }
-    #status { font-size:0.9em; opacity:0.8; margin:10px 0; }
-    #install-btn { display:none; }
-    footer { text-align:center; padding:20px; font-size:0.8em; opacity:0.6; }
-    .switch { position:relative; display:inline-block; width:50px; height:26px; }
+    .pulse-text { animation:pulse 1.5s infinite; color:var(--accent); }
+    canvas { width:100%; height:160px; background:#111; border-radius:8px; margin:15px 0; }
+    #status, #flare-status { margin:10px 0; font-size:0.9em; opacity:0.8; }
+    .switch { position:relative; display:inline-block; width:50px; height:26px; margin-left:auto; }
     .switch input { opacity:0; width:0; height:0; }
-    .slider { position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background:#333; transition:.4s; border-radius:34px; }
-    .slider:before { position:absolute; content:""; height:18px; width:18px; left:4px; bottom:4px; background:var(--bg); transition:.4s; border-radius:50%; }
+    .slider { position:absolute; cursor:pointer; inset:0; background:#333; border-radius:34px; transition:0.4s; }
+    .slider:before { position:absolute; content:""; height:18px; width:18px; left:4px; bottom:4px; background:var(--bg); transition:0.4s; border-radius:50%; }
     input:checked + .slider { background:var(--accent); }
     input:checked + .slider:before { transform:translateX(24px); }
+    #install-btn { display:none; margin:15px auto; }
+    footer { text-align:center; padding:15px; font-size:0.8em; opacity:0.7; }
+    .donate { margin:20px 0; }
+    .donate img { width:180px; border-radius:12px; margin:10px 0; }
   </style>
 </head>
 <body>
+
   <header>
     <h1>Δ = Observer Delta</h1>
-    <p>Quantum CHSH + Real-Time Solar Flares</p>
+    <p>Quantum CHSH + Real-Time Solar Flares — 100% Offline</p>
   </header>
 
   <nav>
     <button id="tab-quantum" class="active">Quantum</button>
     <button id="tab-solar">Solar</button>
-    <label class="switch" style="margin-left:auto;">
+    <label class="switch">
       <input type="checkbox" id="theme-toggle">
       <span class="slider"></span>
     </label>
@@ -77,7 +78,7 @@
     <div id="quantum-panel">
       <div class="card">
         <p>Noise Level (γ): <span id="noise-value">0.005</span></p>
-        <input type="range" id="noise-slider" min="0" max="0.1" step="0.001" value="0.005" style="width:100%;">
+        <input type="range" id="noise-slider" min="0" max="0.1" step="0.001" value="0.005">
         <button id="collapse">Collapse Now</button>
         <div id="result"></div>
       </div>
@@ -85,19 +86,26 @@
 
     <div id="solar-panel" style="display:none;">
       <div class="card">
-        <button id="update-solar">Update Solar Data</button>
-        <div id="flare-status">Fetching...</div>
+        <button id="update-solar">Update Solar</button>
+        <div id="flare-status">Fetching data...</div>
         <canvas id="flux-chart"></canvas>
         <p><small>NOAA GOES X-ray Flux (1-min)</small></p>
       </div>
     </div>
 
-    <div id="status"></div>
+    <div id="status">Loading quantum engine...</div>
     <button id="install-btn">Install App</button>
+
+    <!-- Donation Section — PayPal QR Only -->
+    <div class="card donate">
+      <p><strong>Love this? Support the collapse!</strong></p>
+      <img src="paypal-qr.png" alt="PayPal QR Code">
+      <p><small>Scan with PayPal → Any amount helps</small></p>
+    </div>
   </div>
 
   <footer>
-    100% Offline • Built with Pyodide • <a href="https://github.com/observer-delta/Observer-Delta-Quantum" style="color:var(--accent);">GitHub</a>
+    Built with Pyodide • <a href="https://github.com/observer-delta/Observer-Delta-Quantum" style="color:var(--accent);">GitHub</a>
   </footer>
 
   <!-- Pyodide -->
@@ -120,16 +128,16 @@
     const noiseValue = document.getElementById('noise-value');
     const installBtn = document.getElementById('install-btn');
 
-    // Theme
+    // Theme Toggle
     document.getElementById('theme-toggle').addEventListener('change', (e) => {
       document.documentElement.setAttribute('data-theme', e.target.checked ? 'light' : 'dark');
     });
 
-    // Tabs
+    // Tab Switching
     document.getElementById('tab-quantum').onclick = () => switchTab('quantum');
     document.getElementById('tab-solar').onclick = () => switchTab('solar');
     function switchTab(tab) {
-      document.querySelectorAll('#tab-quantum, #tab-solar').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
       document.getElementById(`tab-${tab}`).classList.add('active');
       quantumPanel.style.display = tab === 'quantum' ? 'block' : 'none';
       solarPanel.style.display = tab === 'solar' ? 'block' : 'none';
@@ -142,13 +150,11 @@
       installBtn.style.display = 'block';
       installBtn.onclick = () => {
         deferredPrompt.prompt();
-        deferredPrompt.userChoice.then(() => {
-          installBtn.style.display = 'none';
-        });
+        deferredPrompt.userChoice.then(() => installBtn.style.display = 'none');
       };
     });
 
-    // Pyodide Init
+    // Init Pyodide
     async function initPyodide() {
       status.textContent = 'Loading quantum engine...';
       try {
@@ -174,32 +180,29 @@
       try {
         const code = `
 import numpy as np
-from numpy.linalg import norm
-
 psi = np.array([1,0,0,1]) / np.sqrt(2)
 a1, a2 = 0, np.pi/4
 b1, b2 = np.pi/8, 3*np.pi/8
 
-def projector(theta):
+def proj(theta):
     return np.array([[np.cos(theta)**2, np.cos(theta)*np.sin(theta)],
                      [np.cos(theta)*np.sin(theta), np.sin(theta)**2]])
 
-A1 = np.kron(np.eye(2), projector(a1))
-A2 = np.kron(np.eye(2), projector(a2))
-B1 = np.kron(projector(b1), np.eye(2))
-B2 = np.kron(projector(b2), np.eye(2))
+A1 = np.kron(np.eye(2), proj(a1))
+A2 = np.kron(np.eye(2), proj(a2))
+B1 = np.kron(proj(b1), np.eye(2))
+B2 = np.kron(proj(b2), np.eye(2))
 
 def corr(A, B, rho):
     return np.real(np.trace(A @ B @ rho))
 
-rho = np.outer(psi, psi.conj())
-rho = (1 - gamma) * rho + gamma * np.eye(4)/4
-
+rho = (1 - gamma) * np.outer(psi, psi.conj()) + gamma * np.eye(4)/4
 S = corr(A1,B1,rho) + corr(A1,B2,rho) + corr(A2,B1,rho) - corr(A2,B2,rho)
-f"S = {S:.4f}\\nSPOOKY LINK " + ("SURVIVED" if abs(S)>2 else "BROKEN")
+
+f"S = {S:.4f}\\nSPOOKY LINK " + ("<span class=\\"pulse-text\\">SURVIVED</span>" if abs(S)>2 else "BROKEN")
         `;
         const output = await pyodide.runPythonAsync(code);
-        result.innerHTML = output.replace("SURVIVED", "<span class='pulse-text'>SURVIVED</span>").replace("BROKEN", "<span style='color:var(--warn)'>BROKEN</span>");
+        result.innerHTML = output;
       } catch (e) {
         result.textContent = "Error: " + e.message;
       } finally {
@@ -234,23 +237,23 @@ f"S = {S:.4f}\\nSPOOKY LINK " + ("SURVIVED" if abs(S)>2 else "BROKEN")
       if (fluxData.length < 2) return;
       const [minT, maxT] = [Math.min(...fluxData.map(p=>p.t)), Math.max(...fluxData.map(p=>p.t))];
       const [minF, maxF] = [Math.min(...fluxData.map(p=>p.f)), Math.max(...fluxData.map(p=>p.f))];
-      const w = canvas.width = 500, h = canvas.height = 150;
+      const w = canvas.width = 500, h = canvas.height = 160;
       ctx.clearRect(0,0,w,h);
       ctx.strokeStyle = 'var(--accent)'; ctx.lineWidth = 2;
       ctx.beginPath();
       fluxData.forEach((p,i) => {
         const x = 50 + (p.t - minT)/(maxT - minT) * (w - 100);
-        const y = 120 - (p.f - minF)/(maxF - minF) * 80;
+        const y = 130 - (p.f - minF)/(maxF - minF) * 90;
         i === 0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
       });
       ctx.stroke();
     }
 
     function predictFlare() {
-      if (fluxData.length < 10) return;
+      if (fluxData.length < 10) { flareStatus.textContent = "Flare risk: —"; return; }
       const recent = fluxData.slice(-5);
       const slope = (recent[4].f - recent[0].f) / ((recent[4].t - recent[0].t)/60000);
-      const prob = Math.min(99, Math.max(0, 10 + 50 * slope));
+      const prob = Math.min(99, Math.max(0, 10 + 60 * slope));
       flareStatus.innerHTML = `Flare Risk (30 min): <b>${prob.toFixed(1)}%</b>`;
       if (prob > 60) {
         collapseBtn.classList.add('warn');
