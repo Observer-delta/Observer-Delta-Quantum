@@ -149,10 +149,12 @@
       result.innerHTML = "";
 
       try {
-        // INTERPOLATE gamma DIRECTLY INTO PYTHON CODE
+        // PASS gamma via Pyodide globals
+        window.pyodide.globals.set("gamma", gamma);
+
+        // Run Python code — gamma is now in scope
         const code = `
 import numpy as np
-gamma = ${gamma}
 psi = np.array([1,0,0,1]) / np.sqrt(2)
 a1, a2 = 0, np.pi/4
 b1, b2 = np.pi/8, 3*np.pi/8
@@ -174,6 +176,7 @@ S = corr(A1,B1,rho) + corr(A1,B2,rho) + corr(A2,B1,rho) - corr(A2,B2,rho)
 
 f"S = {S:.4f}\\nSPOOKY LINK " + ("<span class=\\"pulse-text\\">SURVIVED</span>" if abs(S)>2 else "BROKEN")
         `;
+
         const output = await window.pyodide.runPythonAsync(code);
         result.innerHTML = output;
       } catch (e) {
