@@ -5,12 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Δ = Observer Delta</title>
   <meta name="theme-color" content="#000000">
-  <meta name="description" content="Live Bell-State CHSH + Solar Flares — 100% Offline Quantum Lab">
-
-  <!-- PWA -->
   <link rel="manifest" href="manifest.json">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M50 15 L70 35 L70 65 L50 85 L30 65 L30 35 Z' fill='%2300ff00'/%3E%3Ctext x='50' y='60' font-family='sans-serif' font-size='40' fill='%23000' text-anchor='middle' font-weight='bold'%3EΔ%3C/text%3E%3C/svg%3E">
-
   <style>
     :root { --bg: #000; --text: #0f0; --accent: #0f0; --warn: #f55; }
     [data-theme="light"] { --bg: #fff; --text: #000; --accent: #00f; --warn: #f00; }
@@ -77,10 +73,9 @@
       </div>
     </div>
 
-    <div id="status">Loading quantum engine...</div>
+    <div id="status">Loading quantum engine from CDN...</div>
     <button id="install-btn">Install App</button>
 
-    <!-- PayPal QR Only -->
     <div class="card donate">
       <p><strong>Love this? Support the collapse!</strong></p>
       <img src="paypal-qr.png" alt="PayPal QR Code">
@@ -92,12 +87,15 @@
     Built with Pyodide • <a href="https://github.com/observer-delta/Observer-Delta-Quantum" style="color:var(--accent);">GitHub</a>
   </footer>
 
-  <!-- Pyodide -->
-  <script src="pyodide/pyodide.js"></script>
+  <!-- PYODIDE FROM CDN -->
+  <script>
+    let script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/pyodide/v0.26.1/full/pyodide.js';
+    script.onload = () => initPyodide();
+    document.head.appendChild(script);
+  </script>
 
   <script type="module">
-    import { loadPyodide } from "./pyodide/pyodide.js";
-
     let pyodide, deferredPrompt;
     const quantumPanel = document.getElementById('quantum-panel');
     const solarPanel = document.getElementById('solar-panel');
@@ -138,11 +136,11 @@
       };
     });
 
-    // Pyodide
+    // Pyodide from CDN
     async function initPyodide() {
-      status.textContent = 'Loading quantum engine...';
+      status.textContent = 'Loading quantum engine from CDN...';
       try {
-        pyodide = await loadPyodide({ indexURL: "./pyodide/" });
+        pyodide = await loadPyodide();
         await pyodide.loadPackage("numpy");
         status.textContent = 'Quantum engine ready!';
         setTimeout(() => status.style.opacity = '0.6', 2000);
@@ -250,7 +248,7 @@ f"S = {S:.4f}\\nSPOOKY LINK " + ("<span class=\\"pulse-text\\">SURVIVED</span>" 
 
     updateSolarBtn.onclick = fetchSolar;
     setInterval(fetchSolar, 120000);
-    initPyodide().then(() => setTimeout(fetchSolar, 1000));
+    // initPyodide() called after script load
   </script>
 </body>
 </html>
