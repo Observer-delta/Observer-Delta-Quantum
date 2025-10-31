@@ -2,7 +2,7 @@
 
 **Live Bell-State CHSH Quantum Demo — 100% Offline with Pyodide**
 
-[Open the Lab Now](https://observer-delta.github.io/Observer-Delta-Quantum/)
+[Open the Lab Now](https://observer-delta.github./Observer-Delta-Quantum/)
 
 ---
 
