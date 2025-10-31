@@ -31,14 +31,12 @@
     .switch { position:relative; display:inline-block; width:50px; height:26px; margin-left:auto; }
     .switch input { opacity:0; width:0; height:0; }
     .slider { position:absolute; cursor:pointer; inset:0; background:#333; border-radius:34px; transition:0.4s; }
-    .slider:before { position:absolute; content:""; height:18px; width:18px; left:4px; bottom:4px; background:var
-
---bg); transition:0.4s; border-radius:50%; }
+    .slider:before { position:absolute; content:""; height:18px; width:18px; left:4px; bottom:4px; background:var(--bg); transition:0.4s; border-radius:50%; }
     input:checked + .slider { background:var(--accent); }
     input:checked + .slider:before { transform:translateX(24px); }
     #install-btn { display:none; margin:15px auto; }
     footer { text-align:center; padding:15px; font-size:0.8em; opacity:0.7; }
-    .donate { margin:20px 0; padding:15px; border:1px dashed var(--accent); border-radius:12px; font-size:0.9em; }
+    .donate { margin:20px 0; padding:15px; border:1px dashed var(--accent); border-radius:12px; font-size:0.9em; text-align:center; }
   </style>
 </head>
 <body>
@@ -92,16 +90,20 @@
     Built with Pyodide • <a href="https://github.com/observer-delta/Observer-Delta-Quantum" style="color:var(--accent);">GitHub</a>
   </footer>
 
-  <!-- PYODIDE FROM CDN -->
+  <!-- PYODIDE FROM CDN — FIXED -->
   <script>
-    let script = document.createElement('script');
+    const script = document.createElement('script');
     script.src = 'https://cdn.jsdelivr.net/pyodide/v0.26.1/full/pyodide.js';
-    script.onload = () => initPyodide();
+    script.onload = async () => {
+      const pyodide = await globalThis.loadPyodide();
+      window.pyodide = pyodide;
+      await initPyodide();
+    };
     document.head.appendChild(script);
   </script>
 
   <script type="module">
-    let pyodide, deferredPrompt;
+    let deferredPrompt;
     const quantumPanel = document.getElementById('quantum-panel');
     const solarPanel = document.getElementById('solar-panel');
     const result = document.getElementById('result');
@@ -141,12 +143,11 @@
       };
     });
 
-    // Pyodide from CDN
+    // Pyodide Init
     async function initPyodide() {
       status.textContent = 'Loading quantum engine from CDN...';
       try {
-        pyodide = await loadPyodide();
-        await pyodide.loadPackage("numpy");
+        await window.pyodide.loadPackage("numpy");
         status.textContent = 'Quantum engine ready!';
         setTimeout(() => status.style.opacity = '0.6', 2000);
         collapseBtn.disabled = false;
@@ -158,7 +159,7 @@
 
     // Collapse
     collapseBtn.onclick = async () => {
-      if (!pyodide) return;
+      if (!window.pyodide) return;
       const gamma = parseFloat(noiseSlider.value);
       collapseBtn.disabled = true;
       collapseBtn.textContent = "Collapsing...";
@@ -188,7 +189,7 @@ S = corr(A1,B1,rho) + corr(A1,B2,rho) + corr(A2,B1,rho) - corr(A2,B2,rho)
 
 f"S = {S:.4f}\\nSPOOKY LINK " + ("<span class=\\"pulse-text\\">SURVIVED</span>" if abs(S)>2 else "BROKEN")
         `;
-        const output = await pyodide.runPythonAsync(code);
+        const output = await window.pyodide.runPythonAsync(code);
         result.innerHTML = output;
       } catch (e) {
         result.textContent = "Error: " + e.message;
