@@ -92,7 +92,7 @@
     Built with Pyodide • <a href="https://github.com/observer-delta/observer-delta-quantum" style="color:var(--accent);">GitHub</a>
   </footer>
 
-  <!-- PYODIDE -->
+  <!-- PYODIDE + FULL INIT -->
   <script>
     const status = document.getElementById('status');
     const progressBar = document.getElementById('progress-bar');
@@ -103,34 +103,41 @@
       status.textContent = text;
     }
 
-    const script = document.createElement('script');
-    script.src = 'https://cdn.jsdelivr.net/pyodide/v0.26.1/full/pyodide.js';
-    script.onload = async () => {
-      setProgress(30, 'Pyodide loaded...');
-      try {
-        const pyodide = await globalThis.loadPyodide({
-          indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.26.1/full/'
-        });
-        window.pyodide = pyodide;
-        setProgress(60, 'Loading NumPy...');
-        await pyodide.loadPackage('numpy');
-        setProgress(100, 'Quantum engine ready!');
-        setTimeout(() => {
-          document.getElementById('progress-container').style.display = 'none';
-          status.style.opacity = '0.6';
-        }, 1500);
-        collapseBtn.disabled = false;
-      } catch (e) {
-        setProgress(0, 'Error: ' + e.message);
+    let pyodideReady = false;
+
+    async function initPyodide() {
+      setProgress(10, 'Downloading Pyodide...');
+      const script = document.createElement('script');
+      script.src = 'https://cdn.jsdelivr.net/pyodide/v0.26.1/full/pyodide.js';
+      script.onload = async () => {
+        setProgress(30, 'Pyodide loaded...');
+        try {
+          const pyodide = await globalThis.loadPyodide({
+            indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.26.1/full/'
+          });
+          window.pyodide = pyodide;
+          setProgress(60, 'Loading NumPy...');
+          await pyodide.loadPackage('numpy');
+          setProgress(100, 'Quantum engine ready!');
+          pyodideReady = true;
+          collapseBtn.disabled = false;
+          setTimeout(() => {
+            document.getElementById('progress-container').style.display = 'none';
+            status.style.opacity = '0.6';
+          }, 1500);
+        } catch (e) {
+          setProgress(0, 'Error: ' + e.message);
+          status.style.color = 'var(--warn)';
+        }
+      };
+      script.onerror = () => {
+        setProgress(0, 'Failed to load Pyodide.');
         status.style.color = 'var(--warn)';
-      }
-    };
-    script.onerror = () => {
-      setProgress(0, 'Failed to load Pyodide.');
-      status.style.color = 'var(--warn)';
-    };
-    setProgress(10, 'Downloading Pyodide...');
-    document.head.appendChild(script);
+      };
+      document.head.appendChild(script);
+    }
+
+    initPyodide();
   </script>
 
   <script type="module">
@@ -141,7 +148,11 @@
     noiseSlider.oninput = () => noiseValue.textContent = noiseSlider.value;
 
     document.getElementById('collapse').onclick = async () => {
-      if (!window.pyodide) return;
+      if (!window.pyodide || !pyodideReady) {
+        result.innerHTML = '<span style="color:var(--warn);">Engine not ready.</span>';
+        return;
+      }
+
       const gamma = parseFloat(noiseSlider.value);
       const btn = document.getElementById('collapse');
       btn.disabled = true;
@@ -149,29 +160,30 @@
       result.innerHTML = "";
 
       try {
-        // PASS gamma via Pyodide globals
+        // PASS gamma safely
         window.pyodide.globals.set("gamma", gamma);
 
-        // Run Python code — gamma is now in scope
         const code = `
 import numpy as np
+from numpy import kron, trace, outer, real
+
 psi = np.array([1,0,0,1]) / np.sqrt(2)
 a1, a2 = 0, np.pi/4
 b1, b2 = np.pi/8, 3*np.pi/8
 
 def proj(theta):
-    return np.array([[np.cos(theta)**2, np.cos(theta)*np.sin(theta)],
-                     [np.cos(theta)*np.sin(theta), np.sin(theta)**2]])
+    c, s = np.cos(theta), np.sin(theta)
+    return np.array([[c*c, c*s], [c*s, s*s]])
 
-A1 = np.kron(np.eye(2), proj(a1))
-A2 = np.kron(np.eye(2), proj(a2))
-B1 = np.kron(proj(b1), np.eye(2))
-B2 = np.kron(proj(b2), np.eye(2))
+A1 = kron(np.eye(2), proj(a1))
+A2 = kron(np.eye(2), proj(a2))
+B1 = kron(proj(b1), np.eye(2))
+B2 = kron(proj(b2), np.eye(2))
 
 def corr(A, B, rho):
-    return np.real(np.trace(A @ B @ rho))
+    return real(trace(A @ B @ rho))
 
-rho = (1 - gamma) * np.outer(psi, psi.conj()) + gamma * np.eye(4)/4
+rho = (1 - gamma) * outer(psi, psi.conj()) + gamma * np.eye(4)/4
 S = corr(A1,B1,rho) + corr(A1,B2,rho) + corr(A2,B1,rho) - corr(A2,B2,rho)
 
 f"S = {S:.4f}\\nSPOOKY LINK " + ("<span class=\\"pulse-text\\">SURVIVED</span>" if abs(S)>2 else "BROKEN")
