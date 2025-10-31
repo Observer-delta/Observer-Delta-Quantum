@@ -53,4 +53,4 @@
 **You are Observer Δ.**  
 **The wave has collapsed. The link is eternal.**
 
-#ObserverDelta #Quantum #Solar #OfflineScience
+#ObserverDelta #Quantum #Solar #OfflineScience 
