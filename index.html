@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Δ = Observer Delta</title>
   <meta name="theme-color" content="#000000">
+  <meta name="description" content="Live Bell-State CHSH + Solar Flares — 100% Offline Quantum Lab">
   <link rel="manifest" href="manifest.json">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M50 15 L70 35 L70 65 L50 85 L30 65 L30 35 Z' fill='%2300ff00'/%3E%3Ctext x='50' y='60' font-family='sans-serif' font-size='40' fill='%23000' text-anchor='middle' font-weight='bold'%3EΔ%3C/text%3E%3C/svg%3E">
   <style>
@@ -30,12 +31,14 @@
     .switch { position:relative; display:inline-block; width:50px; height:26px; margin-left:auto; }
     .switch input { opacity:0; width:0; height:0; }
     .slider { position:absolute; cursor:pointer; inset:0; background:#333; border-radius:34px; transition:0.4s; }
-    .slider:before { position:absolute; content:""; height:18px; width:18px; left:4px; bottom:4px; background:var(--bg); transition:0.4s; border-radius:50%; }
+    .slider:before { position:absolute; content:""; height:18px; width:18px; left:4px; bottom:4px; background:var
+
+--bg); transition:0.4s; border-radius:50%; }
     input:checked + .slider { background:var(--accent); }
     input:checked + .slider:before { transform:translateX(24px); }
     #install-btn { display:none; margin:15px auto; }
     footer { text-align:center; padding:15px; font-size:0.8em; opacity:0.7; }
-    .donate img { width:180px; border-radius:12px; margin:10px 0; }
+    .donate { margin:20px 0; padding:15px; border:1px dashed var(--accent); border-radius:12px; font-size:0.9em; }
   </style>
 </head>
 <body>
@@ -76,10 +79,12 @@
     <div id="status">Loading quantum engine from CDN...</div>
     <button id="install-btn">Install App</button>
 
-    <div class="card donate">
-      <p><strong>Love this? Support the collapse!</strong></p>
-      <img src="paypal-qr.png" alt="PayPal QR Code">
-      <p><small>Scan with PayPal → Any amount helps</small></p>
+    <!-- PAYPAL LINK -->
+    <div class="donate">
+      <p><strong>Support the collapse:</strong></p>
+      <p><a href="https://paypal.me/DELTATHEOBSERVER" target="_blank" style="color:var(--accent); text-decoration:underline;">
+        paypal.me/DELTATHEOBSERVER
+      </a></p>
     </div>
   </div>
 
@@ -248,7 +253,6 @@ f"S = {S:.4f}\\nSPOOKY LINK " + ("<span class=\\"pulse-text\\">SURVIVED</span>" 
 
     updateSolarBtn.onclick = fetchSolar;
     setInterval(fetchSolar, 120000);
-    // initPyodide() called after script load
   </script>
 </body>
 </html>
