@@ -63,7 +63,7 @@
         <p>Noise Level (γ): <span id="noise-value">0.005</span></p>
         <input type="range" id="noise-slider" min="0" max="0.1" step="0.001" value="0.005">
         <button id="collapse" disabled>Collapse Now</button>
-        <div id="result"></div>
+        <div id="result">Initializing Pyodide... (8–15 sec)</div>
       </div>
     </div>
 
@@ -76,7 +76,7 @@
       </div>
     </div>
 
-    <div id="status">Initializing...</div>
+    <div id="status">Downloading Pyodide... (~30MB)</div>
     <div id="progress-container"><div id="progress-bar"></div></div>
     <button id="install-btn" style="display:none;">Install App</button>
 
@@ -92,22 +92,25 @@
     Built with Pyodide • <a href="https://github.com/observer-delta/observer-delta-quantum" style="color:var(--accent);">GitHub</a>
   </footer>
 
-  <!-- PYODIDE -->
+  <!-- PYODIDE + QUANTUM + SOLAR -->
   <script type="module">
     import { loadPyodide } from "https://cdn.jsdelivr.net/pyodide/v0.26.1/full/pyodide.mjs";
 
     const status = document.getElementById('status');
     const progressBar = document.getElementById('progress-bar');
     const collapseBtn = document.getElementById('collapse');
+    const result = document.getElementById('result');
+    const noiseSlider = document.getElementById('noise-slider');
+    const noiseValue = document.getElementById('noise-value');
 
-    function setProgress(percent, text) {
-      progressBar.style.width = percent + '%';
-      status.textContent = text;
+    function setProgress(pct, txt) {
+      progressBar.style.width = pct + '%';
+      status.textContent = txt;
     }
 
     let pyodide;
     async function initPyodide() {
-      setProgress(10, 'Downloading Pyodide...');
+      setProgress(10, 'Downloading Pyodide... (~30MB)');
       pyodide = await loadPyodide();
       setProgress(50, 'Loading NumPy...');
       await pyodide.loadPackage("numpy");
@@ -117,16 +120,13 @@
         status.style.opacity = '0.6';
       }, 1500);
       collapseBtn.disabled = false;
+      result.innerHTML = 'Ready. Click "Collapse Now".';
     }
 
     initPyodide().catch(e => {
       setProgress(0, 'Error: ' + e.message);
       status.style.color = 'var(--warn)';
     });
-
-    const noiseSlider = document.getElementById('noise-slider');
-    const noiseValue = document.getElementById('noise-value');
-    const result = document.getElementById('result');
 
     noiseSlider.oninput = () => noiseValue.textContent = noiseSlider.value;
 
@@ -142,19 +142,10 @@ import numpy as np
 gamma = ${gamma}
 psi = np.array([1+0j, 0, 0, 1]) / np.sqrt(2)
 rho = (1 - gamma) * np.outer(psi, psi.conj()) + gamma * np.eye(4)/4
-theta_a1 = 0
-theta_a2 = np.pi/2
-theta_b1 = np.pi/4
-theta_b2 = -np.pi/4
 def M(theta):
     return np.cos(theta) * np.array([[1,0],[0,-1]]) + np.sin(theta) * np.array([[0,1],[1,0]])
-M_a1 = M(theta_a1)
-M_a2 = M(theta_a2)
-M_b1 = M(theta_b1)
-M_b2 = M(theta_b2)
-def corr(M1, M2):
-    return np.real(np.trace(np.kron(M1, M2) @ rho))
-S = corr(M_a1, M_b1) + corr(M_a1, M_b2) + corr(M_a2, M_b1) - corr(M_a2, M_b2)
+corr = lambda A,B: np.real(np.trace(np.kron(A,B) @ rho))
+S = corr(M(0), M(np.pi/4)) + corr(M(0), M(-np.pi/4)) + corr(M(np.pi/2), M(np.pi/4)) - corr(M(np.pi/2), M(-np.pi/4))
 f"S = {S:.4f}\\nSPOOKY LINK " + ("<span class=\\"pulse-text\\">SURVIVED</span>" if abs(S)>2 else "BROKEN")
       `;
 
@@ -169,40 +160,39 @@ f"S = {S:.4f}\\nSPOOKY LINK " + ("<span class=\\"pulse-text\\">SURVIVED</span>" 
       }
     };
 
-    // [Rest: tabs, PWA, solar — unchanged]
-    let deferredPrompt;
-    const quantumPanel = document.getElementById('quantum-panel');
-    const solarPanel = document.getElementById('solar-panel');
-    const installBtn = document.getElementById('install-btn');
-    const updateSolarBtn = document.getElementById('update-solar');
-    const flareStatus = document.getElementById('flare-status');
-    const canvas = document.getElementById('flux-chart');
-    const ctx = canvas.getContext('2d');
-
-    document.getElementById('theme-toggle').addEventListener('change', (e) => {
-      document.documentElement.setAttribute('data-theme', e.target.checked ? 'light' : 'dark');
-    });
-
+    // TABS
     document.getElementById('tab-quantum').onclick = () => switchTab('quantum');
     document.getElementById('tab-solar').onclick = () => switchTab('solar');
     function switchTab(tab) {
       document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
       document.getElementById(`tab-${tab}`).classList.add('active');
-      quantumPanel.style.display = tab === 'quantum' ? 'block' : 'none';
-      solarPanel.style.display = tab === 'solar' ? 'block' : 'none';
+      document.getElementById('quantum-panel').style.display = tab === 'quantum' ? 'block' : 'none';
+      document.getElementById('solar-panel').style.display = tab === 'solar' ? 'block' : 'none';
     }
 
-    window.addEventListener('beforeinstallprompt', (e) => {
+    // THEME
+    document.getElementById('theme-toggle').addEventListener('change', e => {
+      document.documentElement.setAttribute('data-theme', e.target.checked ? 'light' : 'dark');
+    });
+
+    // PWA
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', e => {
       e.preventDefault();
       deferredPrompt = e;
-      installBtn.style.display = 'block';
-      installBtn.onclick = () => {
+      document.getElementById('install-btn').style.display = 'block';
+      document.getElementById('install-btn').onclick = () => {
         deferredPrompt.prompt();
-        deferredPrompt.userChoice.then(() => installBtn.style.display = 'none');
+        deferredPrompt.userChoice.then(() => document.getElementById('install-btn').style.display = 'none');
       };
     });
 
+    // SOLAR FLARES
     let fluxData = [];
+    const flareStatus = document.getElementById('flare-status');
+    const canvas = document.getElementById('flux-chart');
+    const ctx = canvas.getContext('2d');
+
     async function fetchSolar() {
       flareStatus.textContent = "Updating...";
       try {
@@ -257,7 +247,6 @@ f"S = {S:.4f}\\nSPOOKY LINK " + ("<span class=\\"pulse-text\\">SURVIVED</span>" 
     document.getElementById('update-solar').onclick = fetchSolar;
     setInterval(fetchSolar, 120000);
     fetchSolar();
-
   </script>
 </body>
 </html>
